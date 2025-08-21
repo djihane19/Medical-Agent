@@ -22,7 +22,7 @@ function AddNewSessionDialog() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<doctorAgent>(); // To Store suggested doctors
-  const [selectedDoctor,setSelectDoctor] = useState<doctorAgent>()
+  const [selectedDoctor, setSelectDoctor] = useState<doctorAgent | undefined>(undefined);
 
   const OnClickNext = async () => {
     setLoading(true);
@@ -34,9 +34,21 @@ function AddNewSessionDialog() {
     setLoading(false)
   };
 
-  const onStartConsultation=()=>{
+  const onStartConsultation= async ()=>{
+    //save info to db
+    setLoading(true)
+    const result = await axios.post('/api/session-chat',{
+        notes:note,
+        selectedDoctor:selectedDoctor
+    })
+    console.log(result.data)
+    if (result.data?.sessionId){
+        console.log(result.data.sessionId);
 
-    
+    }
+    setLoading(false)
+
+
   }
 
   return (
@@ -64,13 +76,9 @@ function AddNewSessionDialog() {
                 
                 
             { //@ts-ignore
-            doctors.map((doctor, index) => (
-         <SuggestedDoctorCard doctorAgent={doctor} key={index} 
-         setSelectDoctor={()=>setSelectDoctor(doctor) } 
-         />)
-            )}
-
-            </div> </div>
+            doctors.map((doctor, index) => (<SuggestedDoctorCard doctorAgent={doctor} key={index} setSelectDoctor={()=>setSelectDoctor(doctor) }  selectedDoctor={selectedDoctor} />)            )}
+             </div> 
+           </div>
           }
           </DialogDescription>
         </DialogHeader>
@@ -82,7 +90,8 @@ function AddNewSessionDialog() {
 
           {!doctors? <Button disabled={!note || loading } onClick={()=> OnClickNext() }>
            Next {loading ? <Loader2 className='anime-spin' />: <ArrowRight />} </Button>
-           : <Button onClick={()=>onStartConsultation()}>Start Consultation <ArrowRight /></Button>}
+           : <Button disabled={ loading || !selectedDoctor  } onClick={()=>onStartConsultation()}>Start Consultation
+           {loading ? <Loader2 className='anime-spin' />: <ArrowRight />}</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
